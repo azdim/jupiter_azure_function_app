@@ -1,0 +1,84 @@
+---
+name: Production Deployment
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build infrastructure
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 1
+      matrix:
+        environment: ["dev"]
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v2
+      - name: Terraform Init
+        id: init
+        run: terraform init
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -var-file=./environments/${{ matrix.environment }}.tfvars -no-color
+        continue-on-error: true
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main'
+        run: terraform apply -var-file=./environments/${{ matrix.environment }}.tfvars -auto-approve
+  test:
+    name: Test deployed infrastructure
+    runs-on: windows-latest
+    strategy:
+      max-parallel: 1
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v2
+      - name: Run tests
+        working-directory: ./pester
+        uses: azure/powershell@v1
+        with:
+          inlineScript: |
+            if (get-module 'pester'){remove-module 'pester' -Force}
+            Install-Module pester -MaximumVersion 4.10.1 -AllowClobber -SkipPublisherCheck -Force
+            Import-Module pester -MaximumVersion 4.10.1 -Force
+            Invoke-Pester
+          azPSVersion: "latest"
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 1
+      matrix:
+        environment: ["dev"]
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v2
+      - name: Terraform Init
+        id: init
+        run: terraform init
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -var-file=./environments/${{ matrix.environment }}.tfvars -no-color
+        continue-on-error: true
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main'
+        run: terraform apply -var-file=./environments/${{ matrix.environment }}.tfvars -auto-approve
+  destroy:
+    name: Destroy Dev environment
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 1
+      matrix:
+        environment: ["dev"]
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v2
+      - name: Terraform Init
+        id: init
+        run: terraform init
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -var-file=./environments/${{ matrix.environment }}.tfvars -no-color
+        continue-on-error: true
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main'
+        run: terraform destroy -var-file=./environments/${{ matrix.environment }}.tfvars -auto-approve
