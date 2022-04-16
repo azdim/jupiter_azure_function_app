@@ -1,5 +1,7 @@
 # Terraform Configuration
 
+![infrastructure overview](../images/function_app.png)
+
 * This code should act as foundation to a function app deployment
 
 <!-- BEGIN_TF_DOCS -->

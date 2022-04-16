@@ -1,7 +1,5 @@
 # Azure function app repository
 
-[![Run shift-left testing](https://github.com/azdim/jupiter_azure_function_app/actions/workflows/push.yml/badge.svg)](https://github.com/azdim/jupiter_azure_function_app/actions/workflows/push.yml)
-
 * This repository acts as a supplementary material to a presentation.
 
 ## Disclaimer
